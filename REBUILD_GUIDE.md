@@ -2,6 +2,48 @@
 
 This guide helps you rebuild the Event Reminder application from an empty solution. The goal is to learn the architecture by implementing the app layer by layer.
 
+## Version Baseline
+
+Use these versions to rebuild the app close to the current repository:
+
+```text
+.NET target framework: net8.0
+.NET SDK: 8.0.419
+SQL Server Docker image: mcr.microsoft.com/mssql/server:2022-latest
+RabbitMQ Docker image: rabbitmq:management
+```
+
+Create `global.json` in the solution root:
+
+```json
+{
+  "sdk": {
+    "version": "8.0.419",
+    "rollForward": "latestFeature"
+  }
+}
+```
+
+Package versions used by this app:
+
+| Package | Version |
+| --- | --- |
+| `FluentValidation.AspNetCore` | `11.3.0` |
+| `FluentValidation.DependencyInjectionExtensions` | `11.9.2` |
+| `MailKit` | `4.6.0` |
+| `MediatR` | `12.3.0` |
+| `MediatR.Contracts` | `2.0.1` |
+| `Microsoft.AspNetCore.Authentication.JwtBearer` | `8.0.6` |
+| `Microsoft.Data.SqlClient` | `5.2.1` |
+| `Microsoft.EntityFrameworkCore` | `8.0.6` |
+| `Microsoft.EntityFrameworkCore.SqlServer` | `8.0.6` |
+| `Microsoft.EntityFrameworkCore.Tools` | `8.0.6` |
+| `Microsoft.Extensions.Hosting` | `8.0.0` |
+| `Microsoft.VisualStudio.Azure.Containers.Tools.Targets` | `1.20.1` |
+| `Newtonsoft.Json` | `13.0.3` |
+| `RabbitMQ.Client` | `6.8.1` |
+| `Swashbuckle.AspNetCore` | `6.6.2` |
+
 ## 1. Initialize The Solution
 
 Create the solution and projects:
@@ -94,6 +136,16 @@ Example domain questions:
 
 The application layer contains use cases. Use commands and queries to describe user actions.
 
+Install packages:
+
+```bash
+dotnet add EventReminder.Application package FluentValidation.DependencyInjectionExtensions --version 11.9.2
+dotnet add EventReminder.Application package MediatR --version 12.3.0
+dotnet add EventReminder.Application package Microsoft.Data.SqlClient --version 5.2.1
+dotnet add EventReminder.Application package Microsoft.EntityFrameworkCore --version 8.0.6
+dotnet add EventReminder.Application package Newtonsoft.Json --version 13.0.3
+```
+
 Create messaging abstractions:
 
 - `ICommand`
@@ -157,9 +209,9 @@ Keep contracts separate from domain entities. API models should not leak domain 
 Install EF Core packages:
 
 ```bash
-dotnet add EventReminder.Persistence package Microsoft.EntityFrameworkCore
-dotnet add EventReminder.Persistence package Microsoft.EntityFrameworkCore.SqlServer
-dotnet add EventReminder.Persistence package Microsoft.EntityFrameworkCore.Design
+dotnet add EventReminder.Persistence package Microsoft.EntityFrameworkCore --version 8.0.6
+dotnet add EventReminder.Persistence package Microsoft.EntityFrameworkCore.SqlServer --version 8.0.6
+dotnet add EventReminder.Services.Api package Microsoft.EntityFrameworkCore.Tools --version 8.0.6
 ```
 
 Implement:
@@ -204,10 +256,10 @@ The infrastructure layer implements external concerns.
 Install packages:
 
 ```bash
-dotnet add EventReminder.Infrastructure package Microsoft.AspNetCore.Authentication.JwtBearer
-dotnet add EventReminder.Infrastructure package RabbitMQ.Client
-dotnet add EventReminder.Infrastructure package MailKit
-dotnet add EventReminder.Infrastructure package Newtonsoft.Json
+dotnet add EventReminder.Infrastructure package Microsoft.AspNetCore.Authentication.JwtBearer --version 8.0.6
+dotnet add EventReminder.Infrastructure package RabbitMQ.Client --version 6.8.1
+dotnet add EventReminder.Infrastructure package MailKit --version 4.6.0
+dotnet add EventReminder.Application package Newtonsoft.Json --version 13.0.3
 ```
 
 Implement:
@@ -221,6 +273,14 @@ Implement:
 Register these services in `DependencyInjection.cs`.
 
 ## 7. Build The API
+
+Install packages:
+
+```bash
+dotnet add EventReminder.Services.Api package FluentValidation.AspNetCore --version 11.3.0
+dotnet add EventReminder.Services.Api package Microsoft.EntityFrameworkCore.Tools --version 8.0.6
+dotnet add EventReminder.Services.Api package Swashbuckle.AspNetCore --version 6.6.2
+```
 
 Start with these controllers:
 
@@ -258,6 +318,12 @@ Add API concerns:
 ## 8. Add Notifications Service
 
 Build this after the API works.
+
+Install packages:
+
+```bash
+dotnet add EventReminder.BackgroundTasks package Microsoft.Extensions.Hosting --version 8.0.0
+```
 
 Add background services:
 
