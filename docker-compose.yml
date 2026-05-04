@@ -1,0 +1,88 @@
+services:
+  eventreminder.services.api:
+    image: ${DOCKER_REGISTRY-}eventreminderservicesapi
+    container_name: EventReminder.Api
+    build:
+      context: .
+      dockerfile: EventReminder.Services.Api/Dockerfile
+    restart: always
+    ports:
+      - 5000:8080
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__EventReminderDb: "Server=event-reminder-db;Database=EventReminder;User=sa;Password=Strong_password_123!;TrustServerCertificate=True"
+      MessageBroker__HostName: "event-reminder-mq"
+      MessageBroker__Port: "5672"
+      MessageBroker__UserName: "guest"
+      MessageBroker__Password: "guest"
+      MessageBroker__QueueName: "event-reminder-queue"
+    depends_on:
+      event-reminder-db:
+        condition: service_healthy
+      event-reminder-queue:
+        condition: service_healthy
+
+  eventreminder.services.notifications:
+    image: ${DOCKER_REGISTRY-}eventreminderservicesnotifications
+    container_name: EventReminder.Notifications
+    build:
+      context: .
+      dockerfile: EventReminder.Services.Notifications/Dockerfile
+    restart: always
+    ports:
+      - 6000:8080
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__EventReminderDb: "Server=event-reminder-db;Database=EventReminder;User=sa;Password=Strong_password_123!;TrustServerCertificate=True"
+      MessageBroker__HostName: "event-reminder-mq"
+      MessageBroker__Port: "5672"
+      MessageBroker__UserName: "guest"
+      MessageBroker__Password: "guest"
+      MessageBroker__QueueName: "event-reminder-queue"
+    depends_on:
+      event-reminder-db:
+        condition: service_healthy
+      event-reminder-queue:
+        condition: service_healthy
+
+  event-reminder-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: EventReminder.Db
+    volumes:
+        - ./.containers/database:/var/opt/mssql/data
+    ports:
+        - "1433:1433"
+    environment:
+        ACCEPT_EULA: "Y"
+        SA_PASSWORD: "Strong_password_123!"
+    healthcheck:
+        test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Strong_password_123!' -C -Q 'SELECT 1' || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Strong_password_123!' -Q 'SELECT 1'"]
+        interval: 10s
+        timeout: 5s
+        retries: 12
+        start_period: 20s
+
+  event-reminder-queue:
+    image: rabbitmq:management
+    container_name: EventReminder.Queue
+    hostname: event-reminder-mq
+    ports:
+        - "5672:5672"
+        - "15672:15672"
+    volumes:
+        - event-reminder-queue-data:/var/lib/rabbitmq
+    environment:
+        RABBITMQ_DEFAULT_USER: guest
+        RABBITMQ_DEFAULT_PASS: guest
+        RABBITMQ_NODENAME: rabbit@event-reminder-mq
+    healthcheck:
+        test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 12
+        start_period: 20s
+
+volumes:
+  event-reminder-queue-data:
