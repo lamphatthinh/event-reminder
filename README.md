@@ -142,13 +142,3 @@ dotnet test
 ```bash
 docker compose down
 ```
-
-## Contributing
-1. Fork the repository and create a feature branch.
-2. Follow the existing layering and CQRS patterns.
-3. Add or update tests when introducing new behavior.
-4. Open a pull request with a clear summary and rationale.
-
-## License
-MIT. See [LICENSE](LICENSE).
-"# event-reminder" 
