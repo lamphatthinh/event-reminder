@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using EventReminder.Application.Abstractions.Messaging;
 using EventReminder.BackgroundTasks.Services;
 using EventReminder.Infrastructure.Messaging.Settings;
+using EventReminder.Domain.Core.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ namespace EventReminder.BackgroundTasks.Tasks
 {
     internal  sealed class IntegrationEventConsumerBackgroundService : IHostedService, IDisposable
     {
+        private readonly ILogger<IntegrationEventConsumerBackgroundService> _logger;
         private readonly IServiceProvider _serviceProvider;
         private readonly IModel _channel;
         private readonly IConnection _connection;
@@ -32,6 +34,7 @@ namespace EventReminder.BackgroundTasks.Tasks
             IOptions<MessageBrokerSettings> messageBrokerSettingsOptions,
             IServiceProvider serviceProvider)
         {
+            _logger = logger;
             _serviceProvider = serviceProvider;
             MessageBrokerSettings messageBrokerSettings = messageBrokerSettingsOptions.Value;
 
@@ -88,22 +91,42 @@ namespace EventReminder.BackgroundTasks.Tasks
         /// <param name="sender">The sender.</param>
         /// <param name="eventArgs">The event arguments.</param>
         /// <returns>The completed task.</returns>
-        private void OnIntegrationEventReceived(object sender, BasicDeliverEventArgs eventArgs)
+        private void OnIntegrationEventReceived(object? sender, BasicDeliverEventArgs eventArgs)
         {
-            string body = Encoding.UTF8.GetString(eventArgs.Body.Span);
-
-            var integrationEvent = JsonConvert.DeserializeObject<IIntegrationEvent>(body, new JsonSerializerSettings
+            try
             {
-                TypeNameHandling = TypeNameHandling.Auto
-            });
+                string body = Encoding.UTF8.GetString(eventArgs.Body.Span);
 
-            using IServiceScope scope = _serviceProvider.CreateScope();
+                var integrationEvent = JsonConvert.DeserializeObject<IIntegrationEvent>(body, new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.Auto
+                });
 
-            var integrationEventConsumer = scope.ServiceProvider.GetRequiredService<IIntegrationEventConsumer>();
+                using IServiceScope scope = _serviceProvider.CreateScope();
 
-            integrationEventConsumer.Consume(integrationEvent);
+                var integrationEventConsumer = scope.ServiceProvider.GetRequiredService<IIntegrationEventConsumer>();
 
-            _channel.BasicAck(eventArgs.DeliveryTag, false);
+                integrationEventConsumer.Consume(integrationEvent);
+
+                _logger.LogInformation("Integration event processed: {EventType}", integrationEvent?.GetType().FullName);
+
+                _channel.BasicAck(eventArgs.DeliveryTag, false);
+            }
+            catch (DomainException domainException)
+            {
+                _logger.LogWarning(domainException,
+                    "Domain error while processing integration event. DeliveryTag: {DeliveryTag}, ErrorCode: {ErrorCode}",
+                    eventArgs.DeliveryTag,
+                    domainException.Error.Code);
+
+                _channel.BasicNack(eventArgs.DeliveryTag, false, true);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Failed to process integration event with delivery tag {DeliveryTag}.", eventArgs.DeliveryTag);
+
+                _channel.BasicNack(eventArgs.DeliveryTag, false, true);
+            }
         }
     }
 }

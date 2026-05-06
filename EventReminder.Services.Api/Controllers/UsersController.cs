@@ -2,6 +2,7 @@
 using EventReminder.Application.Users.GetUserById;
 using EventReminder.Application.Users.SendFriendshipRequest;
 using EventReminder.Application.Users.UpdateUser;
+using EventReminder.Application.Abstractions.Authentication;
 using EventReminder.Contracts.Users;
 using EventReminder.Domain.Core.Errors;
 using EventReminder.Domain.Core.Primitives.Maybe;
@@ -15,47 +16,47 @@ namespace EventReminder.Services.Api.Controllers
 {
     public sealed class UsersController : ApiController
     {
-        public UsersController(IMediator mediator)
+        private readonly IUserIdentifierProvider _userIdentifierProvider;
+
+        public UsersController(IMediator mediator, IUserIdentifierProvider userIdentifierProvider)
             : base(mediator)
         {
+            _userIdentifierProvider = userIdentifierProvider;
         }
 
         [HttpGet(ApiRoutes.Users.GetById)]
         [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetById(Guid userId) =>
+        public async Task<IActionResult> GetById() =>
             await Maybe<GetUserByIdQuery>
-                .From(new GetUserByIdQuery(userId))
+            .From(new GetUserByIdQuery(_userIdentifierProvider.UserId))
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 
         [HttpPut(ApiRoutes.Users.Update)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Update(Guid userId, UpdateUserRequest updateUserRequest) =>
+        public async Task<IActionResult> Update(UpdateUserRequest updateUserRequest) =>
             await Result.Create(updateUserRequest, DomainErrors.General.UnProcessableRequest)
-                .Ensure(request => request.UserId == userId, DomainErrors.General.UnProcessableRequest)
-                .Map(request => new UpdateUserCommand(request.UserId, request.FirstName, updateUserRequest.LastName))
+            .Map(request => new UpdateUserCommand(_userIdentifierProvider.UserId, request.FirstName, updateUserRequest.LastName))
                 .Bind(command => Mediator.Send(command))
                 .Match(Ok, BadRequest);
 
         [HttpPut(ApiRoutes.Users.ChangePassword)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ChangePassword(Guid userId, ChangePasswordRequest changePasswordRequest) =>
+        public async Task<IActionResult> ChangePassword(ChangePasswordRequest changePasswordRequest) =>
             await Result.Create(changePasswordRequest, DomainErrors.General.UnProcessableRequest)
-                .Ensure(request => request.UserId == userId, DomainErrors.General.UnProcessableRequest)
-                .Map(request => new ChangePasswordCommand(request.UserId, request.Password))
+            .Map(request => new ChangePasswordCommand(_userIdentifierProvider.UserId, request.Password))
                 .Bind(command => Mediator.Send(command))
                 .Match(Ok, BadRequest);
 
         [HttpPost(ApiRoutes.Users.SendFriendshipRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> SendFriendshipRequest(Guid userId, SendFriendshipRequestRequest sendFriendshipRequestRequest) =>
+        public async Task<IActionResult> SendFriendshipRequest(SendFriendshipRequestRequest sendFriendshipRequestRequest) =>
             await Result.Create(sendFriendshipRequestRequest, DomainErrors.General.UnProcessableRequest)
-                .Ensure(request => request.UserId == userId, DomainErrors.General.UnProcessableRequest)
-                .Map(request => new SendFriendshipRequestCommand(request.UserId, request.FriendId))
+                .Map(request => new SendFriendshipRequestCommand(_userIdentifierProvider.UserId, request.FriendId))
                 .Bind(command => Mediator.Send(command))
                 .Match(Ok, BadRequest);
     }

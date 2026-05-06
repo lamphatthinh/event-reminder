@@ -108,13 +108,13 @@
         /// </summary>
         public static class Users
         {
-            public const string GetById = "users/{userId:guid}";
+            public const string GetById = "users/me";
 
-            public const string Update = "users/{userId:guid}";
+            public const string Update = "users/me";
 
-            public const string ChangePassword = "users/{userId:guid}/change-passwrod";
+            public const string ChangePassword = "users/me/change-password";
 
-            public const string SendFriendshipRequest = "users/{userId:guid}/send-friendship-request";
+            public const string SendFriendshipRequest = "users/me/send-friendship-request";
         }
     }
 }

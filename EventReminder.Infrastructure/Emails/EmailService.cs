@@ -45,9 +45,12 @@ namespace EventReminder.Infrastructure.Emails
 
             using var smtpClient = new SmtpClient();
 
-            await smtpClient.ConnectAsync(_mailSettings.SmtpServer, _mailSettings.SmtpPort, SecureSocketOptions.StartTls);
+            await smtpClient.ConnectAsync(_mailSettings.SmtpServer, _mailSettings.SmtpPort, SecureSocketOptions.Auto);
 
-            await smtpClient.AuthenticateAsync(_mailSettings.SenderEmail, _mailSettings.SmtpPassword);
+            if (!string.IsNullOrWhiteSpace(_mailSettings.SmtpPassword) && smtpClient.AuthenticationMechanisms.Count > 0)
+            {
+                await smtpClient.AuthenticateAsync(_mailSettings.SenderEmail, _mailSettings.SmtpPassword);
+            }
 
             await smtpClient.SendAsync(email);
 

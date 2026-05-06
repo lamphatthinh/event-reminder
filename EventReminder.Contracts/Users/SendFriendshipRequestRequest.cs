@@ -8,11 +8,6 @@ namespace EventReminder.Contracts.Users
     public sealed class SendFriendshipRequestRequest
     {
         /// <summary>
-        /// Gets or sets the user identifier.
-        /// </summary>
-        public Guid UserId { get; set; }
-
-        /// <summary>
         /// Gets or sets the friend identifier.
         /// </summary>
         public Guid FriendId { get; set; }

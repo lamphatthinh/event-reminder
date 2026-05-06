@@ -8,11 +8,6 @@ namespace EventReminder.Contracts.Users
     public sealed class UpdateUserRequest
     {
         /// <summary>
-        /// Gets or sets the user identifier.
-        /// </summary>
-        public Guid UserId { get; set; }
-
-        /// <summary>
         /// Gets or sets the first name.
         /// </summary>
         public string FirstName { get; set; }

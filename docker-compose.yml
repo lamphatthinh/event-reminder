@@ -84,5 +84,12 @@ services:
         retries: 12
         start_period: 20s
 
+  maildev:
+    image: maildev/maildev
+    container_name: MailDev
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+
 volumes:
   event-reminder-queue-data:

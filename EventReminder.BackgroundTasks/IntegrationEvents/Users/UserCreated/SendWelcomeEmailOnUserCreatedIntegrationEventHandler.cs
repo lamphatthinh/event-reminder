@@ -24,28 +24,15 @@ namespace EventReminder.BackgroundTasks.IntegrationEvents.Users.UserCreated
         /// </summary>
         /// <param name="userRepository">The user repository.</param>
         /// <param name="emailNotificationService">The email notification service.</param>
-        public SendWelcomeEmailOnUserCreatedIntegrationEventHandler(
-            IUserRepository userRepository,
-            IEmailNotificationService emailNotificationService)
+        public SendWelcomeEmailOnUserCreatedIntegrationEventHandler(IEmailNotificationService emailNotificationService)
         {
             _emailNotificationService = emailNotificationService;
-            _userRepository = userRepository;
         }
 
         /// <inheritdoc />
         public async Task Handle(UserCreatedIntegrationEvent notification, CancellationToken cancellationToken)
         {
-            Maybe<User> maybeUser = await _userRepository.GetByIdAsync(notification.UserId);
-
-            if (maybeUser.HasNoValue)
-            {
-                throw new DomainException(DomainErrors.User.NotFound);
-            }
-
-            User user = maybeUser.Value;
-
-            var welcomeEmail = new WelcomeEmail(user.Email, user.FullName);
-
+            WelcomeEmail welcomeEmail = new WelcomeEmail(notification.Email, notification.FullName);
             await _emailNotificationService.SendWelcomeEmail(welcomeEmail);
         }
     }
