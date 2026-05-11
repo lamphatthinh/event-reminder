@@ -279,6 +279,9 @@ namespace EventReminder.Domain.Core.Errors
             public static Error InvalidEmailOrPassword => new Error(
                 "Authentication.InvalidEmailOrPassword",
                 "The specified email or password are incorrect.");
+            public static Error InvalidPassword => new Error(
+                "Authentication.InvalidPassword",
+                "The specified password are incorrect.");
         }
     }
 }

@@ -12,11 +12,11 @@ namespace EventReminder.Persistence.Extensions
     /// </summary>
     internal static class ModelBuilderExtensions
     {
-        private static readonly ValueConverter<DateTime, DateTime> UtcValueConverter =
-            new ValueConverter<DateTime, DateTime>(outside => outside, inside => DateTime.SpecifyKind(inside, DateTimeKind.Utc));
+        private static readonly ValueConverter<DateTime, DateTime> LocalValueConverter =
+            new ValueConverter<DateTime, DateTime>(outside => outside, inside => DateTime.SpecifyKind(inside, DateTimeKind.Local));
 
         /// <summary>
-        /// Applies the UTC date-time converter to all of the properties that are <see cref="DateTime"/> and end with Utc.
+        /// Applies the local date-time converter to all of the properties that are <see cref="DateTime"/> and end with Utc.
         /// </summary>
         /// <param name="modelBuilder">The model builder.</param>
         internal static void ApplyUtcDateTimeConverter(this ModelBuilder modelBuilder)
@@ -28,7 +28,7 @@ namespace EventReminder.Persistence.Extensions
 
                 foreach (IMutableProperty mutableProperty in dateTimeUtcProperties)
                 {
-                    mutableProperty.SetValueConverter(UtcValueConverter);
+                    mutableProperty.SetValueConverter(LocalValueConverter);
                 }
             }
         }

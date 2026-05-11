@@ -31,22 +31,23 @@ namespace EventReminder.Persistence.Repositories
         /// <inheritdoc />
         public async Task RemovePendingInvitationsForFriendshipAsync(Friendship friendship, DateTime utcNow)
         {
-            const string sql = @"
-                UPDATE Invitation
-                SET DeletedOnUtc = @DeletedOn, Deleted = @Deleted
-                WHERE (UserId = @UserId AND FriendId = @FriendId) ||
-                      (UserId = @FriendId AND FriendId = @UserId)
-                      CompletedOnUtc IS NULL AND Deleted = 0";
+            // need to be review
+            //const string sql = @"
+            //    UPDATE Invitation
+            //    SET DeletedOnUtc = @DeletedOn, Deleted = @Deleted
+            //    WHERE (UserId IN (@UserId, @FriendId))
+            //          AND CompletedOnUtc IS NULL 
+            //          AND Deleted = 0";
             
-            SqlParameter[] parameters =
-            {
-                new SqlParameter("@DeletedOn", utcNow),
-                new SqlParameter("@Deleted", true),
-                new SqlParameter("@UserId", friendship.UserId),
-                new SqlParameter("@FriendId", friendship.FriendId)
-            };
+            //SqlParameter[] parameters =
+            //{
+            //    new SqlParameter("@DeletedOn", utcNow),
+            //    new SqlParameter("@Deleted", true),
+            //    new SqlParameter("@UserId", friendship.UserId),
+            //    new SqlParameter("@FriendId", friendship.FriendId)
+            //};
 
-            await DbContext.ExecuteSqlAsync(sql, parameters);
+            //await DbContext.ExecuteSqlAsync(sql, parameters);
         }
 
         /// <inheritdoc />

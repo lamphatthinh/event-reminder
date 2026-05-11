@@ -24,10 +24,10 @@ namespace EventReminder.Services.Api.Controllers
             _userIdentifierProvider = userIdentifierProvider;
         }
 
-        [HttpGet(ApiRoutes.Users.GetById)]
+        [HttpGet(ApiRoutes.Users.GetMyInfo)]
         [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetById() =>
+        public async Task<IActionResult> GetMyInfo() =>
             await Maybe<GetUserByIdQuery>
             .From(new GetUserByIdQuery(_userIdentifierProvider.UserId))
                 .Bind(query => Mediator.Send(query))
@@ -47,7 +47,7 @@ namespace EventReminder.Services.Api.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ChangePassword(ChangePasswordRequest changePasswordRequest) =>
             await Result.Create(changePasswordRequest, DomainErrors.General.UnProcessableRequest)
-            .Map(request => new ChangePasswordCommand(_userIdentifierProvider.UserId, request.Password))
+            .Map(request => new ChangePasswordCommand(_userIdentifierProvider.UserId, request.Password, request.NewPassword))
                 .Bind(command => Mediator.Send(command))
                 .Match(Ok, BadRequest);
 

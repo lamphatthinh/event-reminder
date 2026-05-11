@@ -1,8 +1,8 @@
 services:
-  eventreminder.services.api:
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_HTTP_PORTS=8080
+  # eventreminder.services.api:
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ASPNETCORE_HTTP_PORTS=8080
 
   eventreminder.services.notifications:
     environment:

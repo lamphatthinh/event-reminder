@@ -1,4 +1,5 @@
-﻿using EventReminder.Application.FriendshipRequests.AcceptFriendshipRequest;
+﻿using EventReminder.Application.Abstractions.Authentication;
+using EventReminder.Application.FriendshipRequests.AcceptFriendshipRequest;
 using EventReminder.Application.FriendshipRequests.GetFriendshipRequestById;
 using EventReminder.Application.FriendshipRequests.GetPendingFriendshipRequests;
 using EventReminder.Application.FriendshipRequests.GetSentFriendshipRequests;
@@ -15,9 +16,11 @@ namespace EventReminder.Services.Api.Controllers
 {
     public sealed class FriendshipRequestsController : ApiController
     {
-        public FriendshipRequestsController(IMediator mediator)
+        private readonly IUserIdentifierProvider _userIdentitierProvider;
+        public FriendshipRequestsController(IMediator mediator, IUserIdentifierProvider userIdentifierProvider)
             : base(mediator)
         {
+            _userIdentitierProvider = userIdentifierProvider;
         }
 
         [HttpGet(ApiRoutes.FriendshipRequests.GetById)]
@@ -32,18 +35,18 @@ namespace EventReminder.Services.Api.Controllers
         [HttpGet(ApiRoutes.FriendshipRequests.GetPending)]
         [ProducesResponseType(typeof(PendingFriendshipRequestsListResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetPending(Guid userId) =>
+        public async Task<IActionResult> GetPending() =>
             await Maybe<GetPendingFriendshipRequestsQuery>
-                .From(new GetPendingFriendshipRequestsQuery(userId))
+                .From(new GetPendingFriendshipRequestsQuery(_userIdentitierProvider.UserId))
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 
         [HttpGet(ApiRoutes.FriendshipRequests.GetSent)]
         [ProducesResponseType(typeof(SentFriendshipRequestsListResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetSent(Guid userId) =>
+        public async Task<IActionResult> GetSent() =>
             await Maybe<GetSentFriendshipRequestsQuery>
-                .From(new GetSentFriendshipRequestsQuery(userId))
+                .From(new GetSentFriendshipRequestsQuery(_userIdentitierProvider.UserId))
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 

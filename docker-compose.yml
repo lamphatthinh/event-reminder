@@ -1,27 +1,27 @@
 services:
-  eventreminder.services.api:
-    image: ${DOCKER_REGISTRY-}eventreminderservicesapi
-    container_name: EventReminder.Api
-    build:
-      context: .
-      dockerfile: EventReminder.Services.Api/Dockerfile
-    restart: always
-    ports:
-      - 5000:8080
-    environment:
-      ASPNETCORE_ENVIRONMENT: "Development"
-      ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__EventReminderDb: "Server=event-reminder-db;Database=EventReminder;User=sa;Password=Strong_password_123!;TrustServerCertificate=True"
-      MessageBroker__HostName: "event-reminder-mq"
-      MessageBroker__Port: "5672"
-      MessageBroker__UserName: "guest"
-      MessageBroker__Password: "guest"
-      MessageBroker__QueueName: "event-reminder-queue"
-    depends_on:
-      event-reminder-db:
-        condition: service_healthy
-      event-reminder-queue:
-        condition: service_healthy
+  # eventreminder.services.api:
+  #   image: ${DOCKER_REGISTRY-}eventreminderservicesapi
+  #   container_name: EventReminder.Api
+  #   build:
+  #     context: .
+  #     dockerfile: EventReminder.Services.Api/Dockerfile
+  #   restart: always
+  #   ports:
+  #     - 5000:8080
+  #   environment:
+  #     ASPNETCORE_ENVIRONMENT: "Development"
+  #     ASPNETCORE_HTTP_PORTS: "8080"
+  #     ConnectionStrings__EventReminderDb: "Server=event-reminder-db;Database=EventReminder;User=sa;Password=Strong_password_123!;TrustServerCertificate=True"
+  #     MessageBroker__HostName: "event-reminder-mq"
+  #     MessageBroker__Port: "5672"
+  #     MessageBroker__UserName: "guest"
+  #     MessageBroker__Password: "guest"
+  #     MessageBroker__QueueName: "event-reminder-queue"
+  #   depends_on:
+  #     event-reminder-db:
+  #       condition: service_healthy
+  #     event-reminder-queue:
+  #       condition: service_healthy
 
   eventreminder.services.notifications:
     image: ${DOCKER_REGISTRY-}eventreminderservicesnotifications
@@ -53,7 +53,7 @@ services:
     volumes:
         - ./.containers/database:/var/opt/mssql/data
     ports:
-        - "1433:1433"
+        - "1443:1433"
     environment:
         ACCEPT_EULA: "Y"
         SA_PASSWORD: "Strong_password_123!"

@@ -8,7 +8,7 @@ namespace EventReminder.Domain.Events
     public sealed class Category : Enumeration<Category>
     {
         public static readonly Category None = new Category(0, "None");
-        public static readonly Category Concert = new Category(1, "Concert");
+        public static readonly Category Working = new Category(1, "Working");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Category"/> class.

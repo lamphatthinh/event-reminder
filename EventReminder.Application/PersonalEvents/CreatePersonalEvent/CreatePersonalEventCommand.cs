@@ -21,7 +21,7 @@ namespace EventReminder.Application.PersonalEvents.CreatePersonalEvent
             UserId = userId;
             Name = name;
             CategoryId = categoryId;
-            DateTimeUtc = dateTime.ToUniversalTime();
+            DateTimeUtc = dateTime;
         }
 
         /// <summary>

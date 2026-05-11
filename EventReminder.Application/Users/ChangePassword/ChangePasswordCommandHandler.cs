@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using EventReminder.Application.Abstractions.Authentication;
+﻿using EventReminder.Application.Abstractions.Authentication;
 using EventReminder.Application.Abstractions.Cryptography;
 using EventReminder.Application.Abstractions.Data;
 using EventReminder.Application.Abstractions.Messaging;
@@ -8,6 +6,9 @@ using EventReminder.Domain.Core.Errors;
 using EventReminder.Domain.Core.Primitives.Maybe;
 using EventReminder.Domain.Core.Primitives.Result;
 using EventReminder.Domain.Users;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EventReminder.Application.Users.ChangePassword
 {
@@ -20,6 +21,8 @@ namespace EventReminder.Application.Users.ChangePassword
         private readonly IUserRepository _userRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IPasswordHashChecker _passwordHashChecker;
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChangePasswordCommandHandler"/> class.
@@ -32,29 +35,19 @@ namespace EventReminder.Application.Users.ChangePassword
             IUserIdentifierProvider userIdentifierProvider,
             IUserRepository userRepository,
             IUnitOfWork unitOfWork,
-            IPasswordHasher passwordHasher)
+            IPasswordHasher passwordHasher,
+            IPasswordHashChecker passwordHashChecker)
         {
             _userIdentifierProvider = userIdentifierProvider;
             _userRepository = userRepository;
             _unitOfWork = unitOfWork;
             _passwordHasher = passwordHasher;
+            _passwordHashChecker = passwordHashChecker;
         }
 
         /// <inheritdoc />
         public async Task<Result> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
         {
-            if (request.UserId != _userIdentifierProvider.UserId)
-            {
-                return Result.Failure(DomainErrors.User.InvalidPermissions);
-            }
-
-            Result<Password> passwordResult = Password.Create(request.Password);
-
-            if (passwordResult.IsFailure)
-            {
-                return Result.Failure(passwordResult.Error);
-            }
-
             Maybe<User> maybeUser = await _userRepository.GetByIdAsync(request.UserId);
 
             if (maybeUser.HasNoValue)
@@ -63,6 +56,20 @@ namespace EventReminder.Application.Users.ChangePassword
             }
 
             User user = maybeUser.Value;
+
+            bool isPasswordValid = user.VerifyPasswordHash(request.Password, _passwordHashChecker);
+
+            if (!isPasswordValid)
+            {
+                return Result.Failure(DomainErrors.Authentication.InvalidPassword);
+            }
+
+            Result<Password> passwordResult = Password.Create(request.NewPassword);
+
+            if (passwordResult.IsFailure)
+            {
+                return Result.Failure(passwordResult.Error);
+            }
 
             string passwordHash = _passwordHasher.HashPassword(passwordResult.Value);
 

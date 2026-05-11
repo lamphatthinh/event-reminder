@@ -8,8 +8,13 @@ namespace EventReminder.Contracts.Users
     public sealed class ChangePasswordRequest
     {
         /// <summary>
-        /// Gets or sets the new password.
+        /// Gets or sets the old password.
         /// </summary>
         public string Password { get; set; }
+
+        /// <summary>
+        /// Gets or sets the new password.
+        /// </summary>
+        public string NewPassword { get; set; }
     }
 }

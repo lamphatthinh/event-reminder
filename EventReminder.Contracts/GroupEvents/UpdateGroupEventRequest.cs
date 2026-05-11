@@ -8,11 +8,6 @@ namespace EventReminder.Contracts.GroupEvents
     public sealed class UpdateGroupEventRequest
     {
         /// <summary>
-        /// Gets or sets the user identifier.
-        /// </summary>
-        public Guid GroupEventId { get; set; }
-
-        /// <summary>
         /// Gets or sets the name.
         /// </summary>
         public string Name { get; set; }

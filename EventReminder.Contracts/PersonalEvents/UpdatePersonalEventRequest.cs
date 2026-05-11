@@ -8,11 +8,6 @@ namespace EventReminder.Contracts.PersonalEvents
     public sealed class UpdatePersonalEventRequest
     {
         /// <summary>
-        /// Gets or sets the personal identifier.
-        /// </summary>
-        public Guid PersonalEventId { get; set; }
-
-        /// <summary>
         /// Gets or sets the name.
         /// </summary>
         public string Name { get; set; }

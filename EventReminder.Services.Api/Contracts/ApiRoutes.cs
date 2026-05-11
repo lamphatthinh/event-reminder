@@ -1,4 +1,6 @@
-﻿namespace EventReminder.Services.Api.Contracts
+﻿using System.Runtime.CompilerServices;
+
+namespace EventReminder.Services.Api.Contracts
 {
     /// <summary>
     /// Contains the API endpoint routes.
@@ -20,7 +22,7 @@
         /// </summary>
         public static class Attendees
         {
-            public const string Get = "attendees";
+            public const string Get = GroupEvents.Base + "/{groupEventId:guid}/attendees";
         }
 
         /// <summary>
@@ -46,9 +48,9 @@
         {
             public const string Get = "friendships/{userId:guid}/{friendId:guid}";
 
-            public const string GetForUserId = "friendships/{userId:guid}";
+            public const string GetMyFriendShips = "friendships/me";
 
-            public const string Remove = "friendships/{userId:guid}/{friendId:guid}";
+            public const string Base = "friendships";
         }
 
         /// <summary>
@@ -56,7 +58,9 @@
         /// </summary>
         public static class GroupEvents
         {
-            public const string Get = "group-events";
+            public const string Base = "group-events";
+
+            public const string GetMyOwn = "group-events/me";
 
             public const string GetById = "group-events/{groupEventId:guid}";
 
@@ -92,15 +96,15 @@
         /// </summary>
         public static class PersonalEvents
         {
-            public const string Get = "personal-events";
+            public const string Base = "personal-events";
 
-            public const string GetById = "personal-events/{personalEventId:guid}";
+            public const string GetMyOwn = PersonalEvents.Base + "/me";
 
-            public const string Create = "personal-events";
+            public const string GetById = PersonalEvents.Base + "/{personalEventId:guid}";
 
-            public const string Update = "personal-events/{personalEventId:guid}";
+            public const string Update = PersonalEvents.Base + "/{personalEventId:guid}";
 
-            public const string Cancel = "personal-events/{personalEventId:guid}";
+            public const string Cancel = PersonalEvents.Base + "/{personalEventId:guid}";
         }
 
         /// <summary>
@@ -108,7 +112,7 @@
         /// </summary>
         public static class Users
         {
-            public const string GetById = "users/me";
+            public const string GetMyInfo = "users/me";
 
             public const string Update = "users/me";
 

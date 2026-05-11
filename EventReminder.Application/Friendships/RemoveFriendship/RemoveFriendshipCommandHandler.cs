@@ -42,11 +42,6 @@ namespace EventReminder.Application.Friendships.RemoveFriendship
         /// <inheritdoc />
         public async Task<Result> Handle(RemoveFriendshipCommand request, CancellationToken cancellationToken)
         {
-            if (request.UserId != _userIdentifierProvider.UserId)
-            {
-                return Result.Failure(DomainErrors.User.InvalidPermissions);
-            }
-
             var friendshipService = new FriendshipService(_userRepository, _friendshipRepository);
 
             Result result = await friendshipService.RemoveFriendshipAsync(request.UserId, request.FriendId);

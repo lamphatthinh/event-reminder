@@ -1,4 +1,5 @@
-﻿using EventReminder.Application.Friendships.GetFriendship;
+﻿using EventReminder.Application.Abstractions.Authentication;
+using EventReminder.Application.Friendships.GetFriendship;
 using EventReminder.Application.Friendships.GetFriendshipsForUserId;
 using EventReminder.Application.Friendships.RemoveFriendship;
 using EventReminder.Contracts.Common;
@@ -14,17 +15,19 @@ namespace EventReminder.Services.Api.Controllers
 {
     public sealed class FriendshipsController : ApiController
     {
-        public FriendshipsController(IMediator mediator)
+        private readonly IUserIdentifierProvider _userIdentifierProvider;
+        public FriendshipsController(IMediator mediator, IUserIdentifierProvider userIdentifierProvider)
             : base(mediator)
         {
+            _userIdentifierProvider = userIdentifierProvider;
         }
 
-        [HttpGet(ApiRoutes.Friendships.GetForUserId)]
+        [HttpGet(ApiRoutes.Friendships.GetMyFriendShips)]
         [ProducesResponseType(typeof(PagedList<FriendshipResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetById(Guid userId, int page, int pageSize) =>
+        public async Task<IActionResult> GetMyFriendShips(int page, int pageSize) =>
             await Maybe<GetFriendshipsForUserIdQuery>
-                .From(new GetFriendshipsForUserIdQuery(userId, page, pageSize))
+                .From(new GetFriendshipsForUserIdQuery(_userIdentifierProvider.UserId, page, pageSize))
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 
@@ -37,11 +40,11 @@ namespace EventReminder.Services.Api.Controllers
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 
-        [HttpDelete(ApiRoutes.Friendships.Remove)]
+        [HttpDelete(ApiRoutes.Friendships.Base)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> Remove(Guid userId, Guid friendId) =>
-            await Result.Success(new RemoveFriendshipCommand(userId, friendId))
+        public async Task<IActionResult> Remove(Guid friendId) =>
+            await Result.Success(new RemoveFriendshipCommand(_userIdentifierProvider.UserId, friendId))
                 .Bind(command => Mediator.Send(command))
                 .Match(Ok, BadRequest);
     }

@@ -1,4 +1,5 @@
-﻿using EventReminder.Application.GroupEvents.CancelGroupEvent;
+﻿using EventReminder.Application.Abstractions.Authentication;
+using EventReminder.Application.GroupEvents.CancelGroupEvent;
 using EventReminder.Application.GroupEvents.CreateGroupEvent;
 using EventReminder.Application.GroupEvents.Get10MostRecentAttendingGroupEvents;
 using EventReminder.Application.GroupEvents.GetGroupEventById;
@@ -19,9 +20,11 @@ namespace EventReminder.Services.Api.Controllers
 {
     public sealed class GroupEventsController : ApiController
     {
-        public GroupEventsController(IMediator mediator)
+        private readonly IUserIdentifierProvider _userIdentifierProvider;
+        public GroupEventsController(IMediator mediator, IUserIdentifierProvider userIdentifiderProvider)
             : base(mediator)
         {
+            _userIdentifierProvider = userIdentifiderProvider;
         }
 
         [HttpGet(ApiRoutes.GroupEvents.GetById)]
@@ -33,11 +36,10 @@ namespace EventReminder.Services.Api.Controllers
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 
-        [HttpGet(ApiRoutes.GroupEvents.Get)]
+        [HttpGet(ApiRoutes.GroupEvents.GetMyOwn)]
         [ProducesResponseType(typeof(PagedList<GroupEventResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Get(
-            Guid userId,
+        public async Task<IActionResult> GetMyOwn(
             string name,
             int? categoryId,
             DateTime? startDate,
@@ -45,25 +47,25 @@ namespace EventReminder.Services.Api.Controllers
             int page,
             int pageSize) =>
             await Maybe<GetGroupEventsQuery>
-                .From(new GetGroupEventsQuery(userId, name, categoryId, startDate, endDate, page, pageSize))
+                .From(new GetGroupEventsQuery(_userIdentifierProvider.UserId, name, categoryId, startDate, endDate, page, pageSize))
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 
         [HttpGet(ApiRoutes.GroupEvents.GetMostRecentAttending)]
         [ProducesResponseType(typeof(IReadOnlyCollection<GroupEventResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetMostRecentAttending(Guid userId) =>
+        public async Task<IActionResult> GetMostRecentAttending() =>
             await Maybe<Get10MostRecentAttendingGroupEventsQuery>
-                .From(new Get10MostRecentAttendingGroupEventsQuery(userId))
+                .From(new Get10MostRecentAttendingGroupEventsQuery(_userIdentifierProvider.UserId))
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 
-        [HttpPost(ApiRoutes.GroupEvents.Create)]
+        [HttpPost(ApiRoutes.GroupEvents.Base)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create(CreateGroupEventRequest createGroupEventRequest) =>
             await Result.Create(createGroupEventRequest, DomainErrors.General.UnProcessableRequest)
-                .Map(request => new CreateGroupEventCommand(request.UserId, request.Name, request.CategoryId, request.DateTimeUtc))
+                .Map(request => new CreateGroupEventCommand(_userIdentifierProvider.UserId, request.Name, request.CategoryId, request.DateTimeUtc))
                 .Bind(command => Mediator.Send(command))
                 .Match(Ok, BadRequest);
 
@@ -72,8 +74,7 @@ namespace EventReminder.Services.Api.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Update(Guid groupEventId, UpdateGroupEventRequest updateGroupEventRequest) =>
             await Result.Create(updateGroupEventRequest, DomainErrors.General.UnProcessableRequest)
-                .Ensure(request => request.GroupEventId == groupEventId, DomainErrors.General.UnProcessableRequest)
-                .Map(request => new UpdateGroupEventCommand(request.GroupEventId, request.Name, request.DateTimeUtc))
+                .Map(request => new UpdateGroupEventCommand(groupEventId, request.Name, request.DateTimeUtc))
                 .Bind(command => Mediator.Send(command))
                 .Match(Ok, BadRequest);
 
@@ -82,8 +83,7 @@ namespace EventReminder.Services.Api.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> InviteFriend(Guid groupEventId, InviteFriendToGroupEventRequest inviteFriendToGroupEventRequest) =>
             await Result.Create(inviteFriendToGroupEventRequest, DomainErrors.General.UnProcessableRequest)
-                .Ensure(request => request.GroupEventId == groupEventId, DomainErrors.General.UnProcessableRequest)
-                .Map(request => new InviteFriendToGroupEventCommand(request.GroupEventId, request.FriendId))
+                .Map(request => new InviteFriendToGroupEventCommand(groupEventId, request.FriendId))
                 .Bind(command => Mediator.Send(command))
                 .Match(Ok, BadRequest);
 

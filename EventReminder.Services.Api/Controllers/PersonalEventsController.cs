@@ -1,4 +1,5 @@
-﻿using EventReminder.Application.PersonalEvents.CancelPersonalEvent;
+﻿using EventReminder.Application.Abstractions.Authentication;
+using EventReminder.Application.PersonalEvents.CancelPersonalEvent;
 using EventReminder.Application.PersonalEvents.CreatePersonalEvent;
 using EventReminder.Application.PersonalEvents.GetPersonalEventById;
 using EventReminder.Application.PersonalEvents.GetPersonalEvents;
@@ -17,9 +18,11 @@ namespace EventReminder.Services.Api.Controllers
 {
     public sealed class PersonalEventsController : ApiController
     {
-        public PersonalEventsController(IMediator mediator)
+        private readonly IUserIdentifierProvider _userIdentifierProvider;
+        public PersonalEventsController(IMediator mediator, IUserIdentifierProvider userIdentifierProvider)
             : base(mediator)
         {
+            _userIdentifierProvider = userIdentifierProvider;
         }
 
         [HttpGet(ApiRoutes.PersonalEvents.GetById)]
@@ -31,11 +34,10 @@ namespace EventReminder.Services.Api.Controllers
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 
-        [HttpGet(ApiRoutes.PersonalEvents.Get)]
+        [HttpGet(ApiRoutes.PersonalEvents.GetMyOwn)]
         [ProducesResponseType(typeof(PagedList<PersonalEventResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Get(
-            Guid userId,
+        public async Task<IActionResult> GetMyEvents(
             string name,
             int? categoryId,
             DateTime? startDate,
@@ -43,16 +45,16 @@ namespace EventReminder.Services.Api.Controllers
             int page,
             int pageSize) =>
             await Maybe<GetPersonalEventsQuery>
-                .From(new GetPersonalEventsQuery(userId, name, categoryId, startDate, endDate, page, pageSize))
+                .From(new GetPersonalEventsQuery(_userIdentifierProvider.UserId, name, categoryId, startDate, endDate, page, pageSize))
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 
-        [HttpPost(ApiRoutes.PersonalEvents.Create)]
+        [HttpPost(ApiRoutes.PersonalEvents.Base)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create(CreatePersonalEventRequest createPersonalEventRequest) =>
             await Result.Create(createPersonalEventRequest, DomainErrors.General.UnProcessableRequest)
-                .Map(request => new CreatePersonalEventCommand(request.UserId, request.Name, request.CategoryId, request.DateTimeUtc))
+                .Map(request => new CreatePersonalEventCommand(_userIdentifierProvider.UserId, request.Name, request.CategoryId, request.DateTimeUtc))
                 .Bind(command => Mediator.Send(command))
                 .Match(Ok, BadRequest);
 
@@ -61,8 +63,7 @@ namespace EventReminder.Services.Api.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Update(Guid personalEventId, UpdatePersonalEventRequest updatePersonalEventRequest) =>
             await Result.Create(updatePersonalEventRequest, DomainErrors.General.UnProcessableRequest)
-                .Ensure(request => request.PersonalEventId == personalEventId, DomainErrors.General.UnProcessableRequest)
-                .Map(request => new UpdatePersonalEventCommand(request.PersonalEventId, request.Name, request.DateTimeUtc))
+                .Map(request => new UpdatePersonalEventCommand(personalEventId, request.Name, request.DateTimeUtc))
                 .Bind(command => Mediator.Send(command))
                 .Match(Ok, BadRequest);
 

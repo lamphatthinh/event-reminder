@@ -1,4 +1,5 @@
-﻿using EventReminder.Application.Invitations.AcceptInvitation;
+﻿using EventReminder.Application.Abstractions.Authentication;
+using EventReminder.Application.Invitations.AcceptInvitation;
 using EventReminder.Application.Invitations.GetInvitationById;
 using EventReminder.Application.Invitations.GetPendingInvitations;
 using EventReminder.Application.Invitations.GetSentInvitations;
@@ -15,9 +16,11 @@ namespace EventReminder.Services.Api.Controllers
 {
     public sealed class InvitationsController : ApiController
     {
-        public InvitationsController(IMediator mediator)
+        private readonly IUserIdentifierProvider _userIdentifierProvider;
+        public InvitationsController(IMediator mediator, IUserIdentifierProvider userIdentifierProvider)
             : base(mediator)
         {
+            _userIdentifierProvider = userIdentifierProvider;
         }
 
         [HttpGet(ApiRoutes.Invitations.GetById)]
@@ -32,18 +35,18 @@ namespace EventReminder.Services.Api.Controllers
         [HttpGet(ApiRoutes.Invitations.GetPending)]
         [ProducesResponseType(typeof(PendingInvitationsListResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetPending(Guid userId) =>
+        public async Task<IActionResult> GetPending() =>
             await Maybe<GetPendingInvitationsQuery>
-                .From(new GetPendingInvitationsQuery(userId))
+                .From(new GetPendingInvitationsQuery(_userIdentifierProvider.UserId))
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 
         [HttpGet(ApiRoutes.Invitations.GetSent)]
         [ProducesResponseType(typeof(SentInvitationsListResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetSent(Guid userId) =>
+        public async Task<IActionResult> GetSent() =>
             await Maybe<GetSentInvitationsQuery>
-                .From(new GetSentInvitationsQuery(userId))
+                .From(new GetSentInvitationsQuery(_userIdentifierProvider.UserId))
                 .Bind(query => Mediator.Send(query))
                 .Match(Ok, NotFound);
 

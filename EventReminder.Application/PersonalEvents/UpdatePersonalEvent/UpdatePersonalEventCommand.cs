@@ -19,7 +19,7 @@ namespace EventReminder.Application.PersonalEvents.UpdatePersonalEvent
         {
             PersonalEventId = personalEventId;
             Name = name;
-            DateTimeUtc = dateTimeUtc.ToUniversalTime();
+            DateTimeUtc = dateTimeUtc;
         }
 
         /// <summary>

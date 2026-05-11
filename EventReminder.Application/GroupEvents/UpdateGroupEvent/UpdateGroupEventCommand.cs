@@ -19,7 +19,7 @@ namespace EventReminder.Application.GroupEvents.UpdateGroupEvent
         {
             GroupEventId = groupEventId;
             Name = name;
-            DateTimeUtc = dateTimeUtc.ToUniversalTime();
+            DateTimeUtc = dateTimeUtc;
         }
 
         /// <summary>

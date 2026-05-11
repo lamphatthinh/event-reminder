@@ -14,10 +14,11 @@ namespace EventReminder.Application.Users.ChangePassword
         /// </summary>
         /// <param name="userId">The user identifier.</param>
         /// <param name="password">The new password.</param>
-        public ChangePasswordCommand(Guid userId, string password)
+        public ChangePasswordCommand(Guid userId, string password, string newPassword)
         {
             UserId = userId;
             Password = password;
+            NewPassword = newPassword;
         }
 
         /// <summary>
@@ -26,8 +27,13 @@ namespace EventReminder.Application.Users.ChangePassword
         public Guid UserId { get; }
 
         /// <summary>
-        /// Gets the new password.
+        /// Gets the old password.
         /// </summary>
         public string Password { get; }
+
+        /// <summary>
+        /// Gets the new password.
+        /// </summary>
+        public string NewPassword { get; }
     }
 }

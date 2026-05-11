@@ -21,7 +21,7 @@ namespace EventReminder.Application.GroupEvents.CreateGroupEvent
             UserId = userId;
             Name = name;
             CategoryId = categoryId;
-            DateTimeUtc = dateTime.ToUniversalTime();
+            DateTimeUtc = dateTime;
         }
 
         /// <summary>
